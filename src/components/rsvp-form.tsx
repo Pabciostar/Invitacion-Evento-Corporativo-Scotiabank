@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Check, Loader2 } from "lucide-react";
 
+import { db } from "@/lib/firebase-config"; // Importa la instancia de Firestore
+import { collection, addDoc } from "firebase/firestore"; // Funciones para guardar en Firestore
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -39,8 +42,8 @@ const formSchema = z.object({
   career: z
     .string()
     .min(2, { message: "El nombre de la carrera es requerido." }),
-  rut: z.string().regex(/^\d{1,2}\.\d{3}\.\d{3}-[\dkK]$/, {
-    message: "Formato de RUT no válido. Ejemplo: 12.345.678-9",
+  rut: z.string().regex(/^\d{7,8}-[\dkK]$/, { 
+    message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
   confirmAttendance: z.boolean().refine((val) => val === true, {
     message: "Debes confirmar tu asistencia para poder registrarte.",
@@ -81,10 +84,27 @@ export function RsvpForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log(values);
-    setIsSubmitted(true);
+    try {
+      // 1. Crea una referencia a la colección (similar a una tabla)
+      const collectionRef = collection(db, 'invitaciones_scotiabank'); 
+
+      // 2. Guarda los datos usando 'addDoc' para obtener un ID único
+      await addDoc(collectionRef, {
+        ...values,
+        // Opcional: añade un timestamp
+        fechaInscripcion: new Date().toISOString(), 
+      });
+
+      console.log("Datos guardados con éxito en Firestore.");
+      setIsSubmitted(true); // Muestra el mensaje de éxito
+
+    } catch (error) {
+      console.error("Error al guardar la inscripción en Firestore:", error);
+      form.setError("root.serverError", {
+        type: "400",
+        message: "Hubo un error al enviar tu inscripción. Intenta de nuevo.",
+      });
+    }
   }
 
   return (
@@ -173,7 +193,7 @@ export function RsvpForm() {
                     <FormItem>
                       <FormLabel>RUT</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: 12.345.678-9" {...field} />
+                        <Input placeholder="Ej: 12345678-9" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -201,6 +221,14 @@ export function RsvpForm() {
                     </FormItem>
                   )}
                 />
+
+                {form.formState.errors.root?.serverError && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.root.serverError.message}
+                  </p>
+                )}
+
+
                 <Button
                   type="submit"
                   className="w-full"
