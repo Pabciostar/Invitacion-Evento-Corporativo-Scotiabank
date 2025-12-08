@@ -1,8 +1,0 @@
-# apphosting.yaml (¡CORRECCIÓN FINAL DE FORMATO!)
-
-runConfig:
-  maxInstances: 1
-
-env: 
-  - key: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
-    value: "6LcwhiIsAAAAAGIAWDfrdmy8w09YlEQY6_e9-x8g"
