@@ -46,9 +46,7 @@ const formSchema = z.object({
   rut: z.string().regex(/^\d{7,8}-[\dkK]$/, {
     message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
-  confirmAttendance: z.boolean().refine((val) => val === true, {
-    message: "Debes confirmar tu asistencia para poder registrarte.",
-  }),
+  confirmAttendance: z.boolean().default(false), 
 });
 
 function SuccessMessage() {
