@@ -80,7 +80,6 @@ export function RsvpForm() {
       university: "",
       career: "",
       rut: "",
-      confirmAttendance: "false",
     },
   });
 
