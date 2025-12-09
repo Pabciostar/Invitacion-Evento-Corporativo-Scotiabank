@@ -17,7 +17,7 @@
       {
         "source": "**",
 
-        "destination": "APP_HOSTING" 
+        "destination": "/index.html"
       }
     ]
   }
