@@ -46,9 +46,7 @@ const formSchema = z.object({
   rut: z.string().regex(/^\d{7,8}-[\dkK]$/, {
     message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
-  confirmAttendance: z.string({
-    required_error: "Debes seleccionar si participarás o no.",
-  }),
+  confirmAttendance: z.boolean().optional(),
 });
 
 function SuccessMessage() {
@@ -80,24 +78,41 @@ export function RsvpForm() {
       university: "",
       career: "",
       rut: "",
+      confirmAttendance: false,
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // 1. Manejar el valor 'undefined' del checkbox opcional
+    const finalValues = {
+      ...values,
+      // Si el checkbox está desmarcado (undefined), lo forzamos a false para Firestore
+      confirmAttendance: values.confirmAttendance ?? false,
+    };
+
+    // 2. ADVERTENCIA: Si no confirmó (confirmAttendance es false), mostramos el mensaje.
+    if (finalValues.confirmAttendance === false) {
+      const isConfirmed = window.confirm(
+        "Estás seguro que deseas enviar el formulario sin confirmar tu asistencia (No participaré)? \n\nPresiona OK para continuar con 'No participaré' o Cancelar para confirmar tu asistencia."
+      );
+      // Si el usuario presiona Cancelar, detenemos el envío.
+      if (!isConfirmed) {
+        return;
+      }
+    }
+
+    // 3. Lógica de guardado (Solo guardamos finalValues)
     try {
-      // 1. Crea una referencia a la colección (similar a una tabla)
       const collectionRef = collection(db, 'invitaciones_scotiabank');
-      const confirmAttendanceBoolean = values.confirmAttendance === "true";
-      // 2. Guarda los datos usando 'addDoc' para obtener un ID único
+
+      // Note que finalValues.confirmAttendance ya es un booleano (true o false)
       await addDoc(collectionRef, {
-        ...values,
-        // Opcional: añade un timestamp
-        confirmAttendance: confirmAttendanceBoolean, // Usamos el booleano aquí
+        ...finalValues,
         fechaInscripcion: new Date().toISOString(),
       });
 
       console.log("Datos guardados con éxito en Firestore.");
-      setIsSubmitted(true); // Muestra el mensaje de éxito
+      setIsSubmitted(true);
 
     } catch (error) {
       console.error("Error al guardar la inscripción en Firestore:", error);
@@ -204,38 +219,21 @@ export function RsvpForm() {
                   control={form.control}
                   name="confirmAttendance"
                   render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Confirmación de Asistencia</FormLabel>
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4 shadow">
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value} 
-                          className="flex flex-col space-y-1"
-                        >
-                          {/* Opción SÍ */}
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="true" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Sí, participaré en el evento.
-                            </FormLabel>
-                          </FormItem>
-
-                          {/* Opción NO */}
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="false" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              No participaré.
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
-                      <FormDescription>
-                        Por favor, selecciona tu opción para confirmar tu participación.
-                      </FormDescription>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Confirmo mi asistencia al evento (Sí participaré).
+                        </FormLabel>
+                        <FormDescription>
+                          Deja esta casilla vacía si no puedes asistir.
+                        </FormDescription>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
