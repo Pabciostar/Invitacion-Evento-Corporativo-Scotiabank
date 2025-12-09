@@ -46,8 +46,8 @@ const formSchema = z.object({
   rut: z.string().regex(/^\d{7,8}-[\dkK]$/, {
     message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
-  confirmAttendance: z.boolean({
-    required_error: "Debes seleccionar si participarás o no.", // Mensaje de error si no se selecciona nada
+  confirmAttendance: z.string({
+    required_error: "Debes seleccionar si participarás o no.",
   }),
 });
 
@@ -80,7 +80,7 @@ export function RsvpForm() {
       university: "",
       career: "",
       rut: "",
-      confirmAttendance: false,
+      confirmAttendance: "false",
     },
   });
 
@@ -88,11 +88,12 @@ export function RsvpForm() {
     try {
       // 1. Crea una referencia a la colección (similar a una tabla)
       const collectionRef = collection(db, 'invitaciones_scotiabank');
-
+      const confirmAttendanceBoolean = values.confirmAttendance === "true";
       // 2. Guarda los datos usando 'addDoc' para obtener un ID único
       await addDoc(collectionRef, {
         ...values,
         // Opcional: añade un timestamp
+        confirmAttendance: confirmAttendanceBoolean, // Usamos el booleano aquí
         fechaInscripcion: new Date().toISOString(),
       });
 
@@ -208,9 +209,8 @@ export function RsvpForm() {
                       <FormLabel>Confirmación de Asistencia</FormLabel>
                       <FormControl>
                         <RadioGroup
-                          onValueChange={(value) => field.onChange(value === "true")}
-                          // Mapeamos el valor booleano actual del campo a un string para RadioGroup
-                          value={field.value ? "true" : "false"}
+                          onValueChange={field.onChange}
+                          value={field.value} 
                           className="flex flex-col space-y-1"
                         >
                           {/* Opción SÍ */}
