@@ -28,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 const formSchema = z.object({
   fullName: z
@@ -42,7 +43,7 @@ const formSchema = z.object({
   career: z
     .string()
     .min(2, { message: "El nombre de la carrera es requerido." }),
-  rut: z.string().regex(/^\d{7,8}-[\dkK]$/, { 
+  rut: z.string().regex(/^\d{7,8}-[\dkK]$/, {
     message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
   confirmAttendance: z.boolean().refine((val) => val === true, {
@@ -86,13 +87,13 @@ export function RsvpForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // 1. Crea una referencia a la colección (similar a una tabla)
-      const collectionRef = collection(db, 'invitaciones_scotiabank'); 
+      const collectionRef = collection(db, 'invitaciones_scotiabank');
 
       // 2. Guarda los datos usando 'addDoc' para obtener un ID único
       await addDoc(collectionRef, {
         ...values,
         // Opcional: añade un timestamp
-        fechaInscripcion: new Date().toISOString(), 
+        fechaInscripcion: new Date().toISOString(),
       });
 
       console.log("Datos guardados con éxito en Firestore.");
@@ -203,25 +204,44 @@ export function RsvpForm() {
                   control={form.control}
                   name="confirmAttendance"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                    <FormItem className="space-y-3">
+                      <FormLabel>Confirmación de Asistencia</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <RadioGroup
+                          onValueChange={(value) => field.onChange(value === "true")}
+                          // Mapeamos el valor booleano actual del campo a un string para RadioGroup
+                          defaultValue={field.value ? "true" : "false"}
+                          className="flex flex-col space-y-1"
+                        >
+                          {/* Opción SÍ */}
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="true" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Sí, participaré en el evento.
+                            </FormLabel>
+                          </FormItem>
+
+                          {/* Opción NO */}
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="false" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              No participaré.
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Confirmo mi asistencia</FormLabel>
-                        <FormDescription>
-                          Al marcar esta casilla, confirmas tu participación en
-                          el evento.
-                        </FormDescription>
-                        <FormMessage className="pt-2" />
-                      </div>
+                      <FormDescription>
+                        Por favor, selecciona tu opción para confirmar tu participación.
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                {/* Tu código de errores del servidor sigue aquí */}
                 {form.formState.errors.root?.serverError && (
                   <p className="text-sm font-medium text-destructive">
                     {form.formState.errors.root.serverError.message}
