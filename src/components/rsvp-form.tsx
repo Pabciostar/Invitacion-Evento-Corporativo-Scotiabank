@@ -46,7 +46,7 @@ const formSchema = z.object({
   rut: z.string().regex(/^\d{7,8}-[\dkK]$/, {
     message: "Formato de RUT no válido. Debe ser 7 u 8 dígitos, seguido de guion y dígito verificador (Ej: 12345678-9 o 7654321-K)",
   }),
-  confirmAttendance: z.boolean().default(false), 
+  confirmAttendance: z.boolean().default(false),
 });
 
 function SuccessMessage() {
@@ -208,7 +208,7 @@ export function RsvpForm() {
                         <RadioGroup
                           onValueChange={(value) => field.onChange(value === "true")}
                           // Mapeamos el valor booleano actual del campo a un string para RadioGroup
-                          defaultValue={field.value ? "true" : "false"}
+                          value={field.value ? "true" : "false"}
                           className="flex flex-col space-y-1"
                         >
                           {/* Opción SÍ */}
